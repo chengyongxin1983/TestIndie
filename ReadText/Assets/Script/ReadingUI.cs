@@ -14,6 +14,11 @@ public class ReadingUI : UIWindow {
 	public UILabel testLable;
 	UIPanel panel; 
 
+	string strBookName;
+	TextBook book = new TextBook();
+
+	private int nLabelHeight;
+
 	void OnCenterFinished()
 	{
 		Debug.Log ("OnCenterFinished");
@@ -23,6 +28,8 @@ public class ReadingUI : UIWindow {
 	{
 		panel = GetComponent<UIPanel> ();
 	}
+
+
 
 	IEnumerator AdjustScale()
 	{
@@ -41,7 +48,7 @@ public class ReadingUI : UIWindow {
 		uiGrid.AddChild (obj1.transform);
 		uiGrid.AddChild (obj2.transform);
 		uiGrid.AddChild (obj3.transform);
-
+		uiGrid.ResetPosition(-1);
 		List<Transform> children = uiGrid.GetChildList ();
 		foreach (Transform child in children) {
 			BoxCollider collider = child.GetComponent<BoxCollider> ();
@@ -54,9 +61,12 @@ public class ReadingUI : UIWindow {
 			Vector3 labellocalPosition = label.transform.localPosition;
 			labellocalPosition.x = -scrollView.width / 2.0f + 10.0f;
 			labellocalPosition.y = scrollView.height / 2.0f + scrollView.baseClipRegion.y / 2.0f;
-			;
+
+			nLabelHeight = (int)scrollView.height;
 			label.transform.localPosition = labellocalPosition;
 		}
+
+		book.Init(strBookName);
 
 	}
 
@@ -68,6 +78,7 @@ public class ReadingUI : UIWindow {
 				StartCoroutine(AdjustScale());
 
 			center.onFinished += OnCenterFinished;
+			strBookName = param[0] as string;
 		}
 		else
 		{

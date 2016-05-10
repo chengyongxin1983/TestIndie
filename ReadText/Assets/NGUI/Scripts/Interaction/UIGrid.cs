@@ -333,8 +333,15 @@ public class UIGrid : UIWidgetContainer
 	/// <summary>
 	/// Reset the position of all child objects based on the order of items in the list.
 	/// </summary>
+	public void ResetPosition (int x = 0)
+	{
+		List<Transform> list = GetChildList();
 
-	protected virtual void ResetPosition (List<Transform> list)
+		// Reset the position and order of all objects in the list
+		ResetPosition(list, x);
+	}
+
+	protected virtual void ResetPosition (List<Transform> list, int x = 0)
 	{
 		mReposition = false;
 
@@ -343,7 +350,6 @@ public class UIGrid : UIWidgetContainer
 		//for (int i = 0, imax = list.Count; i < imax; ++i)
 		//	list[i].parent = null;
 
-		int x = 0;
 		int y = 0;
 		int maxX = 0;
 		int maxY = 0;

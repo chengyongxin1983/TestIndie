@@ -5,7 +5,7 @@ public class BootScript : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		WindowManager.ShowWindow ("ReadingUI");
+		WindowManager.ShowWindow ("ReadingUI", true, new object[]{"天雨花"});
 	
 	}
 	
