@@ -4,6 +4,33 @@ using System.Collections;
 public class TextBook 
 {
 
+	public string Path
+	{
+		get;set;
+	}
+
+	public string BookMarkKey
+	{
+		get 
+		{
+			return Path;
+		}	
+	}
+
+	public string PageCountKey
+	{
+		get
+		{
+			return Path + "_PC";
+		}
+	}
+
+
+	public string PageStartPosKey(int nPage)
+	{
+		return Path + "_P_" + nPage.ToString();
+	}
+
 	public string text
 	{
 		get;set;
@@ -26,7 +53,22 @@ public class TextBook
 		TextAsset txtAssets = Resources.Load(path) as TextAsset;
 		text = txtAssets.text;
 
-		bookmark = PlayerPrefs.GetInt(path, 0);
+		Path = path;
+		bookmark = PlayerPrefs.GetInt(path, -1);
+	}
+
+	public bool CheckIntegrity()
+	{
+		int nPageCount = PlayerPrefs.GetInt(PageCountKey, 0);
+		if (nPageCount == 0)
+		{
+			return false;
+		}
+
+		for (int i = 0; i < nPageCount; ++i)
+		{
+			PlayerPrefs.GetInt(PageStartPosKey(i), -1);
+		}
 	}
 
 	public void PrePage()
@@ -43,11 +85,18 @@ public class TextBook
 	public int GetText(UILabel[] labels, int nLabelHeight)
 	{
 		int idx = 0;
-		if ( bookmark == 0)
+		if ( bookmark == -1)
 		{
-			idx = 1;
-
-
+			idx = -1;
+			labels[0].text = "";
+			int nContentLen = FillUILabelWithStart(labels[1], 0, nLabelHeight);
+			FillUILabelWithStart(labels[2], nContentLen, nLabelHeight);
+		}
+		else if (bookmark >= 0)
+		{
+			int nContentLen = FillUILabelWithStart(labels[0], bookmark, nLabelHeight);
+			int nContentLen1 = FillUILabelWithStart(labels[1], bookmark + nContentLen, nLabelHeight);
+			FillUILabelWithStart(labels[2], bookmark + nContentLen + nContentLen1, nLabelHeight);
 		}
 
 		return idx;	
@@ -87,7 +136,7 @@ public class TextBook
 					label.text = calcPageText;
 					vSize = label.printedSize;
 				}
-				while(vSize.y <= nLabelHeight);
+				while(vSize.y > nLabelHeight);
 
 				int i = nEstimateEndPage;
 				for (; i < nEstimateEndPage + calcLineCount; ++i)
@@ -120,7 +169,7 @@ public class TextBook
 					label.text = calcPageText;
 					vSize = label.printedSize;
 				}
-				while(vSize.y >= nLabelHeight);
+				while(vSize.y < nLabelHeight);
 
 				int i = nEstimateEndPage - calcLineCount;
 				for (; i < nEstimateEndPage ; ++i)

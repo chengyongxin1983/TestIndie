@@ -18,7 +18,7 @@ public class ReadingUI : UIWindow {
 	TextBook book = new TextBook();
 
 	private int nLabelHeight;
-
+	UILabel[]  labels= new UILabel[3];
 	void OnCenterFinished()
 	{
 		Debug.Log ("OnCenterFinished");
@@ -64,9 +64,11 @@ public class ReadingUI : UIWindow {
 
 			nLabelHeight = (int)scrollView.height;
 			label.transform.localPosition = labellocalPosition;
+			labels[child.GetSiblingIndex()] = label;
 		}
 
 		book.Init(strBookName);
+		book.GetText(labels, nLabelHeight);
 
 	}
 
