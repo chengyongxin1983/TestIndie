@@ -27,13 +27,14 @@ public class SpringPanel : MonoBehaviour
 
 	public float strength = 10f;
 
-	public delegate void OnFinished ();
+	public delegate void OnFinished (Transform trans);
 
 	/// <summary>
 	/// Delegate function to call when the operation finishes.
 	/// </summary>
 
 	public OnFinished onFinished;
+	public GameObject finishCBTrans;
 
 	UIPanel mPanel;
 	Transform mTrans;
@@ -90,7 +91,7 @@ public class SpringPanel : MonoBehaviour
 		if (trigger && onFinished != null)
 		{
 			current = this;
-			onFinished();
+			onFinished(finishCBTrans.transform);
 			current = null;
 		}
     }

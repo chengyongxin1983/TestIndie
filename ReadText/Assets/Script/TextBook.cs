@@ -55,10 +55,17 @@ public class TextBook
 		get;set;
 	}
 
-	// book mark is not a page mark but a character mark
-	public int bookmark
-	{
-		get;set;
+	// book mark is a page mark
+	int _bookmark;
+	public int bookmark {
+		get {
+			return _bookmark;
+		}
+		set {
+			_bookmark = value;
+			PlayerPrefs.SetInt(BookMarkKey, _bookmark);
+		}
+
 	}
 
 	// Use this for initialization
@@ -87,6 +94,7 @@ public class TextBook
 
 	public bool CheckIntegrity(UILabel label)
 	{
+		bookmark = PlayerPrefs.GetInt(BookMarkKey, 0);
 		nPageCount = PlayerPrefs.GetInt(PageCountKey, 0);
 		if (nPageCount == 0)
 		{
@@ -163,7 +171,9 @@ public class TextBook
 		pageStart = pageStartList.ToArray ();
 
 		PlayerPrefs.SetInt (PageWidthKey, label.width);
-		PlayerPrefs.SetInt (PageHeightKey, label.height);
+		PlayerPrefs.SetInt (PageHeightKey, nLabelHeight);
+
+		PlayerPrefs.SetInt(BookMarkKey, 0);
 	}
 
 	public void PrePage()
@@ -177,37 +187,54 @@ public class TextBook
 	// return idx = -1 when no prepage
 	// idx = 0 when prepage and postpage exist
 	// idx = 1 when no postpage 
-	public int GetText(UILabel[] labels, int nLabelHeight)
+	public int GetText(UILabel[] labels, int nLabelHeight, int[] pages)
 	{
 		int idx = 0;
 
-		int nPrepage = bookmark - 1;
-		if (nPrepage >= 0) {
-			FillUILabelWithStart (labels [0], pageStart [nPrepage], nLabelHeight);
-		} 
-		else 
+		pages [0] = bookmark - 1;
+		pages [1] = bookmark ;
+		pages [2] = bookmark + 1;
+
+
+		if (pages [0] < 0) 
 		{
 			idx = -1;
+			pages [0]++;
+			pages [1]++;
+			pages [2]++;
 		}
 
-		if (bookmark >= 0 && bookmark < nPageCount)
-		{
-			FillUILabelWithStart(labels[1], pageStart[bookmark], nLabelHeight);
-		}
-
-		int nextPage = bookmark + 1;
-		if (nextPage <nPageCount )
-		{
-			FillUILabelWithStart(labels[2], pageStart[nextPage], nLabelHeight);
-		}
-		else 
+		if (pages [2] >= nPageCount)
 		{
 			idx = 1;
+			pages [0]--;
+			pages [1]--;
+			pages [2]--;
 		}
 
+		for (int i = 0; i < 3; ++i)
+		{
+			if (pages [i] >= 0 && pages [i] < nPageCount) {
+
+				int nStartChar = pageStart [pages [i]];
+				int nEndChar = text.Length - 1;
+				if (pages [i] < nPageCount - 1 )
+				{
+					nEndChar = pageStart [pages [i] + 1];
+				}
+				labels [i].text =  text.Substring(nStartChar, nEndChar - nStartChar + 1);
+			} 
+			else
+			{
+				labels [i].text = null;
+			}
+		}
+
+	
 		return idx;	
 
 	}
+
 
 
 	int FillUILabelWithStart(UILabel label, int nStart, int nLabelHeight)
@@ -245,7 +272,7 @@ public class TextBook
 				while(vSize.y > nLabelHeight);
 
 				int i = nEstimateEndPage;
-				for (; i < nEstimateEndPage + calcLineCount; ++i)
+				for (; i <= nEstimateEndPage + calcLineCount; ++i)
 				{
 					calcPageText = text.Substring(nStart, i - nStart + 1);
 					label.text = calcPageText;
@@ -278,7 +305,7 @@ public class TextBook
 				while(vSize.y < nLabelHeight);
 
 				int i = nEstimateEndPage - calcLineCount;
-				for (; i < nEstimateEndPage ; ++i)
+				for (; i <= nEstimateEndPage ; ++i)
 				{
 					calcPageText = text.Substring(nStart, i - nStart + 1);
 					label.text = calcPageText;

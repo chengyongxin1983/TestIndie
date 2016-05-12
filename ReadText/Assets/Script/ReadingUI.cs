@@ -19,10 +19,44 @@ public class ReadingUI : UIWindow {
 
 	private int nLabelHeight;
 	UILabel[]  labels= new UILabel[3];
-	void OnCenterFinished()
+	int[] pageIdx = new int[3];
+	void OnCenterFinished(Transform trans)
 	{
-		Debug.Log ("OnCenterFinished");
+		int i = 0;
+		for (; i < 3; ++i)
+		{
+			if (trans == labels[i].transform.parent)
+			{
+				book.bookmark = pageIdx [i];				
+				break;
+			}
+		}
+
+		int idx = book.GetText(labels, nLabelHeight, pageIdx);
+		//uiGrid.ResetPosition(idx);
+
+		UIScrollView sview = scrollView.GetComponent<UIScrollView> ();
+		if (idx == -1)
+		{
+			// First move the position back to where it would be if the scroll bars got reset to zero
+			sview.SetDragAmount(0, 0, false);
+
+			// Next move the clipping area back and update the scroll bars
+			sview.SetDragAmount(0, 0, true);
+		}
+		else if (idx == 0)
+		{
+			sview.SetDragAmount(0.5f, 0, false);
+			sview.SetDragAmount(0.5f, 0, true);
+		}
+		else if (idx == 1)
+		{
+			sview.SetDragAmount(1, 0, false);
+			sview.SetDragAmount(1, 0, true);
+		}
 	}
+
+
 
 	public override void OnAwake()
 	{
@@ -68,8 +102,8 @@ public class ReadingUI : UIWindow {
 		}
 
 		book.Init(strBookName, labels[0], nLabelHeight);
-		book.GetText(labels, nLabelHeight);
-
+		int idx = book.GetText(labels, nLabelHeight, pageIdx);
+		uiGrid.ResetPosition(idx);
 	}
 
 	public override void OnShow(bool bShow, System.Object[] param)

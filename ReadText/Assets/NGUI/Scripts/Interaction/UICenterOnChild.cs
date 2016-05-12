@@ -261,8 +261,10 @@ public class UICenterOnChild : MonoBehaviour
 			else
 #endif
 			{
-				SpringPanel.Begin(mScrollView.panel.cachedGameObject,
-					panelTrans.localPosition - localOffset, springStrength).onFinished = onFinished;
+				SpringPanel sp = SpringPanel.Begin (mScrollView.panel.cachedGameObject,
+					                 panelTrans.localPosition - localOffset, springStrength);
+					sp.onFinished = onFinished;
+				sp.finishCBTrans = mCenteredObject;
 			}
 		}
 		else mCenteredObject = null;
