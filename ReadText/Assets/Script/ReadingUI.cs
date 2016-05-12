@@ -67,7 +67,7 @@ public class ReadingUI : UIWindow {
 			labels[child.GetSiblingIndex()] = label;
 		}
 
-		book.Init(strBookName);
+		book.Init(strBookName, labels[0], nLabelHeight);
 		book.GetText(labels, nLabelHeight);
 
 	}
