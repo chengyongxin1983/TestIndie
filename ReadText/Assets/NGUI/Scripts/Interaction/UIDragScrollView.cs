@@ -92,7 +92,7 @@ public class UIDragScrollView : MonoBehaviour
 
 		if (scrollView && enabled && NGUITools.GetActive(gameObject))
 		{
-			scrollView.Press(pressed);
+			scrollView.Press(pressed, gameObject);
 			
 			if (!pressed && mAutoFind)
 			{

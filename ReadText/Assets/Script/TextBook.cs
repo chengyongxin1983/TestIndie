@@ -184,6 +184,26 @@ public class TextBook
 	{
 	}
 
+	public int GetText(UILabel label, int nLabelHeight, int pageNum)
+	{
+		if (pageNum >= 0 && pageNum < nPageCount) {
+
+			int nStartChar = pageStart [pageNum];
+			int nEndChar = text.Length - 1;
+			if (pageNum < nPageCount - 1 )
+			{
+				nEndChar = pageStart [pageNum + 1];
+			}
+
+			label.text =  text.Substring(nStartChar, nEndChar - nStartChar );
+		} 
+		else
+		{
+			label.text  = null;
+		}
+		return 0;
+	}
+
 	// return idx = -1 when no prepage
 	// idx = 0 when prepage and postpage exist
 	// idx = 1 when no postpage 
@@ -222,7 +242,7 @@ public class TextBook
 				{
 					nEndChar = pageStart [pages [i] + 1];
 				}
-				labels [i].text =  text.Substring(nStartChar, nEndChar - nStartChar + 1);
+				labels [i].text =  text.Substring(nStartChar, nEndChar - nStartChar);
 			} 
 			else
 			{

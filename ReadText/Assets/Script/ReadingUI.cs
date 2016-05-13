@@ -4,6 +4,11 @@ using System.Collections.Generic;
 
 public class ReadingUI : UIWindow {
 
+	public struct PageStruct
+	{
+		public UILabel label;
+		public int pageNum;
+	}
 
 
 	public GameObject textItem;
@@ -18,42 +23,20 @@ public class ReadingUI : UIWindow {
 	TextBook book = new TextBook();
 
 	private int nLabelHeight;
+
+	PageStruct[] pages;
+
 	UILabel[]  labels= new UILabel[3];
 	int[] pageIdx = new int[3];
+
+	void OnCrossBound(Transform trans)
+	{
+		//OnCenterFinished(trans);
+	}
+
 	void OnCenterFinished(Transform trans)
 	{
-		int i = 0;
-		for (; i < 3; ++i)
-		{
-			if (trans == labels[i].transform.parent)
-			{
-				book.bookmark = pageIdx [i];				
-				break;
-			}
-		}
-
-		int idx = book.GetText(labels, nLabelHeight, pageIdx);
-		//uiGrid.ResetPosition(idx);
-
-		UIScrollView sview = scrollView.GetComponent<UIScrollView> ();
-		if (idx == -1)
-		{
-			// First move the position back to where it would be if the scroll bars got reset to zero
-			sview.SetDragAmount(0, 0, false);
-
-			// Next move the clipping area back and update the scroll bars
-			sview.SetDragAmount(0, 0, true);
-		}
-		else if (idx == 0)
-		{
-			sview.SetDragAmount(0.5f, 0, false);
-			sview.SetDragAmount(0.5f, 0, true);
-		}
-		else if (idx == 1)
-		{
-			sview.SetDragAmount(1, 0, false);
-			sview.SetDragAmount(1, 0, true);
-		}
+		
 	}
 
 
@@ -77,33 +60,37 @@ public class ReadingUI : UIWindow {
 		GridlocalPosition.y += scrollView.baseClipRegion.y / 2.0f;
 		uiGrid.transform.localPosition = GridlocalPosition;
 		GameObject obj1 = NGUITools.AddChild (uiGrid.gameObject, textItem);
-		GameObject obj2 = NGUITools.AddChild (uiGrid.gameObject, textItem);
-		GameObject obj3 = NGUITools.AddChild (uiGrid.gameObject, textItem);
-		uiGrid.AddChild (obj1.transform);
-		uiGrid.AddChild (obj2.transform);
-		uiGrid.AddChild (obj3.transform);
-		uiGrid.ResetPosition(-1);
-		List<Transform> children = uiGrid.GetChildList ();
-		foreach (Transform child in children) {
-			BoxCollider collider = child.GetComponent<BoxCollider> ();
+		UILabel label = obj1.GetComponentInChildren<UILabel>();
+
+		nLabelHeight = (int)scrollView.height;
+		book.Init(strBookName, label, nLabelHeight );
+
+		GameObject.Destroy(obj1);
+
+		pages = new PageStruct[book.nPageCount];
+		for (int i = 0; i < book.nPageCount; ++i)
+		{
+			GameObject obj = NGUITools.AddChild (uiGrid.gameObject, textItem);
+			BoxCollider collider = obj.GetComponent<BoxCollider> ();
 			collider.size = new Vector2 (scrollView.width, scrollView.height);
 
-			UILabel label = child.GetComponentInChildren<UILabel> ();
+			UILabel labelComp = obj.GetComponentInChildren<UILabel> ();
 			label.width = (int)scrollView.width - 20;
 			label.height = (int)scrollView.height;
 
-			Vector3 labellocalPosition = label.transform.localPosition;
+			Vector3 labellocalPosition = labelComp.transform.localPosition;
 			labellocalPosition.x = -scrollView.width / 2.0f + 10.0f;
 			labellocalPosition.y = scrollView.height / 2.0f + scrollView.baseClipRegion.y / 2.0f;
 
-			nLabelHeight = (int)scrollView.height;
-			label.transform.localPosition = labellocalPosition;
-			labels[child.GetSiblingIndex()] = label;
+			labelComp.transform.localPosition = labellocalPosition;
+			book.GetText(labelComp, nLabelHeight, i);
+			pages[i].label = labelComp;
+
+			pages[i].pageNum = i;
 		}
 
-		book.Init(strBookName, labels[0], nLabelHeight);
-		int idx = book.GetText(labels, nLabelHeight, pageIdx);
-		uiGrid.ResetPosition(idx);
+		uiGrid.ResetPosition(0);
+
 	}
 
 	public override void OnShow(bool bShow, System.Object[] param)
@@ -114,11 +101,13 @@ public class ReadingUI : UIWindow {
 				StartCoroutine(AdjustScale());
 
 			center.onFinished += OnCenterFinished;
+			center.onCrossBound += OnCrossBound;
 			strBookName = param[0] as string;
 		}
 		else
 		{
 			center.onFinished -= OnCenterFinished;
+			center.onCrossBound -= OnCrossBound;
 		}
 	}
 

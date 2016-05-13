@@ -170,6 +170,19 @@ public class UIScrollView : MonoBehaviour
 	protected Vector2 mDragStartOffset = Vector2.zero;
 	protected bool mDragStarted = false;
 
+	public bool bAutoDisableChildren = false;
+	private Bounds boundsOfOneChild;
+
+	GameObject goFocus = null;
+	enum Arrangement
+	{
+		Horizontal,
+		Vertical,
+	}
+
+	private Arrangement childArragement = Arrangement.Horizontal;
+	private bool bChildPosIncrease = true;
+
 	/// <summary>
 	/// Panel that's being dragged.
 	/// </summary>
@@ -194,11 +207,124 @@ public class UIScrollView : MonoBehaviour
 			{
 				mCalculatedBounds = true;
 				mTrans = transform;
-				mBounds = NGUIMath.CalculateRelativeWidgetBounds(mTrans, mTrans);
+				mBounds = NGUIMath.CalculateRelativeWidgetBounds(mTrans, mTrans, bAutoDisableChildren, true);
+				RecalcChildrenBound();
 			}
 			return mBounds;
 		}
 	}
+
+	void AutoDisableChildren()
+	{
+		if (!bAutoDisableChildren)
+		{
+			return;
+		}
+
+
+		float fWidth =  mPanel.clipRange.z + boundsOfOneChild.size.x;
+		float fHeight = mPanel.clipRange.w + boundsOfOneChild.size.y;
+
+		float x = mPanel.clipRange.x - fWidth  / 2;
+		float y = mPanel.clipRange.y - fHeight / 2;
+
+		Rect rect = new Rect(x, y, fWidth, fHeight);
+
+		bool bActiveChg = false;
+
+		int nChildCnt = mTrans.childCount;
+
+		for (int i = 0; i < nChildCnt; ++i )
+		{
+			Bounds bound = boundsOfOneChild;
+
+			bool bInterActive = true;
+			if (childArragement == Arrangement.Horizontal)
+			{				
+				if (bChildPosIncrease)
+				{					
+					bound.center += ((new Vector3(bound.extents.x * 2, 0, 0)) * i );	
+				}
+				else
+				{
+					bound.center -= ((new Vector3(bound.extents.x * 2, 0, 0)) * i );					
+				}
+
+				if (bound.min.x > rect.xMax || bound.max.x < rect.xMin)
+				{
+					bInterActive = false;
+				}
+			}
+			else 
+			{
+				if (bChildPosIncrease)
+				{	
+					bound.center += ((new Vector3(0, bound.extents.y * 2, 0)) * i );
+				}
+				else
+				{
+					bound.center -= ((new Vector3(0, bound.extents.y * 2, 0)) * i );				
+				}
+				if ( bound.min.y > rect.yMax || bound.max.y < rect.yMin)
+				{
+					bInterActive = false;
+				}
+			}
+
+			Transform transChild = mTrans.GetChild(i);
+			if (transChild.gameObject == goFocus)
+			{
+				continue;
+			}
+			if (bInterActive != transChild.gameObject.activeSelf )
+			{								
+				transChild.gameObject.SetActive(bInterActive);
+			}
+		}		
+
+	}
+	private void RecalcChildrenBound()
+	{
+		if (bAutoDisableChildren)
+		{
+			if (mTrans.childCount > 0)
+			{
+				Transform child = mTrans.GetChild(0);
+				boundsOfOneChild = NGUIMath.CalculateRelativeWidgetBounds(mTrans, child, true);
+			}
+
+			if (mTrans.childCount > 1)
+			{
+				bChildPosIncrease = true;
+				Transform child = mTrans.GetChild(1);
+				Bounds boundsOfTwo = NGUIMath.CalculateRelativeWidgetBounds(mTrans, child, true);
+				Vector3 vDis = boundsOfTwo.center - boundsOfOneChild.center;
+
+				float disX = Mathf.Abs(vDis.x);				
+				float disY = Mathf.Abs(vDis.y);
+				if (disX > disY)
+				{
+					if (vDis.x < 0)
+					{
+						bChildPosIncrease = false;
+					}
+					childArragement =  Arrangement.Horizontal;
+					boundsOfOneChild.extents = new Vector3(disX / 2.0f, boundsOfOneChild.extents.y, boundsOfOneChild.extents.z);
+				}
+				else
+				{
+					if (vDis.y < 0)
+					{
+						bChildPosIncrease = false;
+					}
+					childArragement =  Arrangement.Vertical;
+					boundsOfOneChild.extents = new Vector3(boundsOfOneChild.extents.x, disY / 2.0f, boundsOfOneChild.extents.z);			
+				}
+
+			}			
+		}
+	}
+
 
 	/// <summary>
 	/// Whether the scroll view can move horizontally.
@@ -623,6 +749,12 @@ public class UIScrollView : MonoBehaviour
 		if (updateScrollbars) UpdateScrollbars(mDragID == -10);
 	}
 
+	void Update()
+	{
+
+		AutoDisableChildren();
+	}
+
 	/// <summary>
 	/// Manually invalidate the scroll view's bounds so that they update next time.
 	/// </summary>
@@ -718,7 +850,7 @@ public class UIScrollView : MonoBehaviour
 	/// Create a plane on which we will be performing the dragging.
 	/// </summary>
 
-	public void Press (bool pressed)
+	public void Press (bool pressed, GameObject go)
 	{
 		if (UICamera.currentScheme == UICamera.ControlScheme.Controller) return;
 
@@ -726,6 +858,24 @@ public class UIScrollView : MonoBehaviour
 		{
 			mDragStarted = false;
 			mDragStartOffset = Vector2.zero;
+		}
+
+		goFocus = null;
+		if (pressed && go != null)
+		{
+			Transform lastTrans = go.transform;
+			Transform transParent = lastTrans.parent;
+			while (transParent != null)
+			{
+				if (transParent == mTrans)
+				{
+					goFocus = lastTrans.gameObject;
+					break;
+				}
+
+				lastTrans = transParent;
+				transParent = lastTrans.parent;
+			}			
 		}
 
 		if (enabled && NGUITools.GetActive(gameObject))

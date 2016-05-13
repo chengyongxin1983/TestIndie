@@ -29,16 +29,22 @@ public class SpringPanel : MonoBehaviour
 
 	public delegate void OnFinished (Transform trans);
 
+	public delegate void OnCrossBound (Transform trans);
+
 	/// <summary>
 	/// Delegate function to call when the operation finishes.
 	/// </summary>
 
 	public OnFinished onFinished;
+	public OnCrossBound onCrossBound;
 	public GameObject finishCBTrans;
 
 	UIPanel mPanel;
 	Transform mTrans;
 	UIScrollView mDrag;
+
+	bool lowerBound;
+
 
 	/// <summary>
 	/// Cache the transform.
@@ -94,6 +100,25 @@ public class SpringPanel : MonoBehaviour
 			onFinished(finishCBTrans.transform);
 			current = null;
 		}
+
+		if (onCrossBound != null)
+		{
+			if (lowerBound)
+			{
+				if (after.x <= target.x )
+				{
+					onCrossBound(finishCBTrans.transform);
+				}
+			}
+			else
+			{
+				if (after.x <= target.x)
+				{
+					onCrossBound(finishCBTrans.transform);
+				}
+			}
+			onCrossBound = null;
+		}
     }
 
 	/// <summary>
@@ -108,6 +133,15 @@ public class SpringPanel : MonoBehaviour
 		sp.strength = strength;
 		sp.onFinished = null;
 		sp.enabled = true;
+		if (sp.target.x > go.transform.localPosition.x )
+		{
+			sp.lowerBound = false;	
+		}
+		else
+		{
+			sp.lowerBound = true;
+		}
+
 		return sp;
 	}
 }

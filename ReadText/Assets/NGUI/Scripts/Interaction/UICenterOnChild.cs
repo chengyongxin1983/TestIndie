@@ -33,6 +33,7 @@ public class UICenterOnChild : MonoBehaviour
 	/// </summary>
 
 	public SpringPanel.OnFinished onFinished;
+	public SpringPanel.OnCrossBound onCrossBound;
 
 	/// <summary>
 	/// Callback triggered whenever the script begins centering on a new child object.
@@ -264,6 +265,7 @@ public class UICenterOnChild : MonoBehaviour
 				SpringPanel sp = SpringPanel.Begin (mScrollView.panel.cachedGameObject,
 					                 panelTrans.localPosition - localOffset, springStrength);
 					sp.onFinished = onFinished;
+				sp.onCrossBound = onCrossBound;
 				sp.finishCBTrans = mCenteredObject;
 			}
 		}
