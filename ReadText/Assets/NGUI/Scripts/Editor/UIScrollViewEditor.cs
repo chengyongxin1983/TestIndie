@@ -44,6 +44,9 @@ public class UIScrollViewEditor : Editor
 		NGUIEditorTools.DrawProperty("Cancel Drag If Fits", serializedObject, "disableDragIfFits");
 		NGUIEditorTools.DrawProperty("Smooth Drag Start", serializedObject, "smoothDragStart");
 		NGUIEditorTools.DrawProperty("IOS Drag Emulation", serializedObject, "iOSDragEmulation");
+		NGUIEditorTools.DrawProperty("AutoDisableChildren", serializedObject, "bAutoDisableChildren");
+
+		NGUIEditorTools.DrawProperty("useGrandson", serializedObject, "useGrandson");
 
 		NGUIEditorTools.SetLabelWidth(100f);
 

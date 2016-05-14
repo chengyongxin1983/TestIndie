@@ -42,6 +42,15 @@ public class TextBook
 		}
 	}
 
+	public string FontKey
+	{
+		get
+		{
+			return Path + "_FONT";
+		}
+	}
+
+
 	public int nPageCount;
 	public int[] pageStart;
 
@@ -133,6 +142,12 @@ public class TextBook
 			return false;			
 		}
 
+		int font = PlayerPrefs.GetInt (FontKey, 0);
+		if (font != label.fontSize)
+		{
+			return false;			
+		}
+
 		return true;
 	}
 
@@ -174,6 +189,7 @@ public class TextBook
 		PlayerPrefs.SetInt (PageHeightKey, nLabelHeight);
 
 		PlayerPrefs.SetInt(BookMarkKey, 0);
+		PlayerPrefs.SetInt(FontKey, label.fontSize);
 	}
 
 	public void PrePage()

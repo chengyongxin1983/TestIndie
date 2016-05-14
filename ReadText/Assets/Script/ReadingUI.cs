@@ -63,26 +63,23 @@ public class ReadingUI : UIWindow {
 		UILabel label = obj1.GetComponentInChildren<UILabel>();
 
 		nLabelHeight = (int)scrollView.height;
+		ResetPageLabel (obj1);
 		book.Init(strBookName, label, nLabelHeight );
+	
 
-		GameObject.Destroy(obj1);
+		book.GetText(label, nLabelHeight, 0);
+
 
 		pages = new PageStruct[book.nPageCount];
-		for (int i = 0; i < book.nPageCount; ++i)
+		pages[0].label = label;
+		pages[0].pageNum = 0;
+		//GameObject.Destroy(obj1);
+
+		for (int i = 1; i < book.nPageCount; ++i)
 		{
 			GameObject obj = NGUITools.AddChild (uiGrid.gameObject, textItem);
-			BoxCollider collider = obj.GetComponent<BoxCollider> ();
-			collider.size = new Vector2 (scrollView.width, scrollView.height);
+			UILabel labelComp = ResetPageLabel (obj);
 
-			UILabel labelComp = obj.GetComponentInChildren<UILabel> ();
-			label.width = (int)scrollView.width - 20;
-			label.height = (int)scrollView.height;
-
-			Vector3 labellocalPosition = labelComp.transform.localPosition;
-			labellocalPosition.x = -scrollView.width / 2.0f + 10.0f;
-			labellocalPosition.y = scrollView.height / 2.0f + scrollView.baseClipRegion.y / 2.0f;
-
-			labelComp.transform.localPosition = labellocalPosition;
 			book.GetText(labelComp, nLabelHeight, i);
 			pages[i].label = labelComp;
 
@@ -91,6 +88,23 @@ public class ReadingUI : UIWindow {
 
 		uiGrid.ResetPosition(0);
 
+	}
+
+	UILabel ResetPageLabel(GameObject obj)
+	{
+		BoxCollider collider = obj.GetComponent<BoxCollider> ();
+		collider.size = new Vector2 (scrollView.width, scrollView.height);
+
+		UILabel labelComp = obj.GetComponentInChildren<UILabel> ();
+		labelComp.width = (int)scrollView.width - 20;
+		labelComp.height = (int)scrollView.height;
+
+		Vector3 labellocalPosition = labelComp.transform.localPosition;
+		labellocalPosition.x = -scrollView.width / 2.0f + 10.0f;
+		labellocalPosition.y = scrollView.height / 2.0f + scrollView.baseClipRegion.y / 2.0f;
+
+		labelComp.transform.localPosition = labellocalPosition;
+		return labelComp;
 	}
 
 	public override void OnShow(bool bShow, System.Object[] param)

@@ -171,6 +171,9 @@ public class UIScrollView : MonoBehaviour
 	protected bool mDragStarted = false;
 
 	public bool bAutoDisableChildren = false;
+
+	public bool useGrandson= false;
+
 	private Bounds boundsOfOneChild;
 
 	GameObject goFocus = null;
@@ -222,17 +225,22 @@ public class UIScrollView : MonoBehaviour
 		}
 
 
-		float fWidth =  mPanel.clipRange.z + boundsOfOneChild.size.x;
-		float fHeight = mPanel.clipRange.w + boundsOfOneChild.size.y;
+		float fWidth =  mPanel.finalClipRegion.z + boundsOfOneChild.size.x;
+		float fHeight = mPanel.finalClipRegion.w + boundsOfOneChild.size.y;
 
-		float x = mPanel.clipRange.x - fWidth  / 2;
-		float y = mPanel.clipRange.y - fHeight / 2;
+		float x = mPanel.finalClipRegion.x - fWidth  / 2;
+		float y = mPanel.finalClipRegion.y ;
 
 		Rect rect = new Rect(x, y, fWidth, fHeight);
 
-		bool bActiveChg = false;
+		Transform parent = mTrans;
+		if (useGrandson)
+		{
+			parent = mTrans.GetChild (0);
+		}
 
-		int nChildCnt = mTrans.childCount;
+		int nChildCnt = parent.childCount;
+
 
 		for (int i = 0; i < nChildCnt; ++i )
 		{
@@ -271,7 +279,7 @@ public class UIScrollView : MonoBehaviour
 				}
 			}
 
-			Transform transChild = mTrans.GetChild(i);
+			Transform transChild = parent.GetChild(i);
 			if (transChild.gameObject == goFocus)
 			{
 				continue;
@@ -287,16 +295,23 @@ public class UIScrollView : MonoBehaviour
 	{
 		if (bAutoDisableChildren)
 		{
-			if (mTrans.childCount > 0)
+
+			Transform parent = mTrans;
+			if (useGrandson)
 			{
-				Transform child = mTrans.GetChild(0);
+				parent = mTrans.GetChild (0);
+			}
+
+			if (parent.childCount > 0)
+			{
+				Transform child = parent.GetChild(0);
 				boundsOfOneChild = NGUIMath.CalculateRelativeWidgetBounds(mTrans, child, true);
 			}
 
-			if (mTrans.childCount > 1)
+			if (parent.childCount > 1)
 			{
 				bChildPosIncrease = true;
-				Transform child = mTrans.GetChild(1);
+				Transform child = parent.GetChild(1);
 				Bounds boundsOfTwo = NGUIMath.CalculateRelativeWidgetBounds(mTrans, child, true);
 				Vector3 vDis = boundsOfTwo.center - boundsOfOneChild.center;
 
