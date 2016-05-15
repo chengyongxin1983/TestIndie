@@ -1,13 +1,15 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
 public class ReadingUI : UIWindow {
 
-	public struct PageStruct
+	public class PageStruct
 	{
 		public UILabel label;
 		public int pageNum;
+		public bool valid;
 	}
 
 
@@ -24,7 +26,7 @@ public class ReadingUI : UIWindow {
 
 	private int nLabelHeight;
 
-	PageStruct[] pages;
+	List<PageStruct> pages = new List<PageStruct> ();
 
 	UILabel[]  labels= new UILabel[3];
 	int[] pageIdx = new int[3];
@@ -46,7 +48,19 @@ public class ReadingUI : UIWindow {
 		panel = GetComponent<UIPanel> ();
 	}
 
+	public class PageSorter:IComparer<PageStruct>
+	{  
+		public int Compare(PageStruct x, PageStruct y)
+		{
+			if (!x.valid) {
+				return 1;
+			} else if (!y.valid) {
+				return -1;
+			} 
 
+			return x.pageNum - y.pageNum;
+		}
+	}
 
 	IEnumerator AdjustScale()
 	{
@@ -65,26 +79,51 @@ public class ReadingUI : UIWindow {
 		nLabelHeight = (int)scrollView.height;
 		ResetPageLabel (obj1);
 		book.Init(strBookName, label, nLabelHeight );
+
+		GameObject obj2 = NGUITools.AddChild (uiGrid.gameObject, textItem);
+		UILabel label2= ResetPageLabel (obj2);
+		GameObject obj3 = NGUITools.AddChild (uiGrid.gameObject, textItem);
+		UILabel label3= ResetPageLabel (obj3);
 	
+		PageStruct page1 = new PageStruct ();
+		page1.label = label;
+		page1.pageNum = book.bookmark;
 
-		book.GetText(label, nLabelHeight, 0);
-
-
-		pages = new PageStruct[book.nPageCount];
-		pages[0].label = label;
-		pages[0].pageNum = 0;
-		//GameObject.Destroy(obj1);
-
-		for (int i = 1; i < book.nPageCount; ++i)
+		pages.Add (page1);
+		int nLen = book.FillUILabelWithStart (page1.label, page1.pageNum, nLabelHeight);
+		if (nLen > 0)
 		{
-			GameObject obj = NGUITools.AddChild (uiGrid.gameObject, textItem);
-			UILabel labelComp = ResetPageLabel (obj);
-
-			book.GetText(labelComp, nLabelHeight, i);
-			pages[i].label = labelComp;
-
-			pages[i].pageNum = i;
+			page1.valid = true;
 		}
+
+		PageStruct page2 = new PageStruct ();
+		page2.label = label2;
+		page2.pageNum = page1.pageNum + nLen;
+
+		pages.Add (page2);
+		nLen = book.FillUILabelWithStart (page2.label, page2.pageNum, nLabelHeight);
+		if (nLen > 0)
+		{
+			page2.valid = true;
+		}
+
+		PageStruct page3 = new PageStruct ();
+		page3.label = label3;
+
+		pages.Add (page3);
+		nLen = book.FillUILabelWithEnd (page3.label, page1.pageNum - 1, nLabelHeight);
+		page3.pageNum = page1.pageNum - nLen;
+		if (nLen > 0)
+		{
+			page3.valid = true;
+		}
+
+		pages.Sort (new PageSorter ());
+		for (int i = 0; i < 3; ++i)
+		{
+			pages [i].label.transform.parent.SetSiblingIndex (i);
+		}
+
 
 		uiGrid.ResetPosition(0);
 

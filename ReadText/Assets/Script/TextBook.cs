@@ -89,13 +89,14 @@ public class TextBook
 		text = txtAssets.text;
 
 		Path = path;
-		bookmark = PlayerPrefs.GetInt(path, 0);
-
+		bookmark = PlayerPrefs.GetInt(path, -1);
+		bookmark = -1;
+		/*
 		if (!CheckIntegrity(label))
 		{
 			ClearPageInfo ();
 			RebuildPageInfo (label, nLabelHeight);
-		}
+		}*/
 
 		bookmark = Mathf.Clamp (bookmark, 0, nPageCount - 1);
 	
@@ -200,7 +201,7 @@ public class TextBook
 	{
 	}
 
-	public int GetText(UILabel label, int nLabelHeight, int pageNum)
+	public int GetTextByPageNum(UILabel label, int nLabelHeight, int pageNum)
 	{
 		if (pageNum >= 0 && pageNum < nPageCount) {
 
@@ -219,6 +220,8 @@ public class TextBook
 		}
 		return 0;
 	}
+
+
 
 	// return idx = -1 when no prepage
 	// idx = 0 when prepage and postpage exist
@@ -271,9 +274,107 @@ public class TextBook
 
 	}
 
+	public int FillUILabelWithEnd(UILabel label, int nEnd, int nLabelHeight)
+	{
+		int nLen = 0;
+		int calcLineCount = label.height / label.fontSize;
+		int calcLineColumn = label.width / label.fontSize;
+
+		if (nEnd < 0)
+		{
+			// out of limit
+		}
+		else 
+		{
+			int nEstimateStartPage = nEnd - calcLineCount * calcLineColumn;
+
+			nEstimateStartPage = Mathf.Clamp(nEstimateStartPage, 0, text.Length - 1);
+
+			string calcPageText = text.Substring(nEstimateStartPage, nEnd - nEstimateStartPage + 1);
+			label.text = calcPageText;
+			Vector2 vSize = label.printedSize;
 
 
-	int FillUILabelWithStart(UILabel label, int nStart, int nLabelHeight)
+			if (vSize.y > nLabelHeight )
+			{
+				do
+				{
+					nEstimateStartPage = nEstimateStartPage + calcLineColumn;
+
+
+					calcPageText = text.Substring(nEstimateStartPage, nEnd - nEstimateStartPage + 1);
+					label.text = calcPageText;
+					vSize = label.printedSize;
+				}
+				while(vSize.y > nLabelHeight);
+
+				int i = nEstimateStartPage;
+				for (; i >= nEstimateStartPage - calcLineColumn; --i)
+				{
+					calcPageText = text.Substring(i, nEnd - i + 1);
+					label.text = calcPageText;
+					vSize = label.printedSize;
+
+					if (vSize.y > nLabelHeight)
+					{
+						break;
+					}
+				}
+
+				i++;
+				nLen = nEnd - i + 1;
+			}
+			else if (vSize.y < nLabelHeight )
+			{
+				do
+				{
+					nEstimateStartPage = nEstimateStartPage - calcLineColumn;
+					nEstimateStartPage = Mathf.Clamp(nEstimateStartPage, 0, text.Length - 1);
+					if (nEstimateStartPage == 0)
+					{
+						break;
+					}
+
+					calcPageText = text.Substring(nEstimateStartPage, nEnd - nEstimateStartPage + 1);
+					label.text = calcPageText;
+					vSize = label.printedSize;
+				}
+				while(vSize.y < nLabelHeight);
+
+				int i = nEstimateStartPage + calcLineCount;
+				for (; i >= nEstimateStartPage ; --i)
+				{
+					calcPageText = text.Substring(i, nEnd - i + 1);
+					label.text = calcPageText;
+					vSize = label.printedSize;
+
+					if (vSize.y > nLabelHeight)
+					{
+						break;
+					}
+				}
+
+				i++;
+				nLen = nEnd - i  + 1;
+			}
+			else
+			{
+				nLen = nEnd - nEstimateStartPage + 1;
+			}
+
+
+			calcPageText = text.Substring(nEnd - nLen + 1,nLen);
+			label.text = calcPageText;
+
+		}
+
+
+		return nLen;
+	}
+
+
+
+	public int FillUILabelWithStart(UILabel label, int nStart, int nLabelHeight)
 	{
 		int nLen = 0;
 		int calcLineCount = label.height / label.fontSize;
