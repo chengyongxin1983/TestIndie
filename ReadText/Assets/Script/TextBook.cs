@@ -89,16 +89,19 @@ public class TextBook
 		text = txtAssets.text;
 
 		Path = path;
-		bookmark = PlayerPrefs.GetInt(path, -1);
-		bookmark = -1;
+		bookmark = PlayerPrefs.GetInt(path, 0);
+
 		/*
 		if (!CheckIntegrity(label))
 		{
 			ClearPageInfo ();
 			RebuildPageInfo (label, nLabelHeight);
 		}*/
-
-		bookmark = Mathf.Clamp (bookmark, 0, nPageCount - 1);
+	
+		if (bookmark < 0)
+		{
+			bookmark = 0;
+		}
 	
 	}
 

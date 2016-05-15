@@ -9,10 +9,10 @@ public class ReadingUI : UIWindow {
 	{
 		public UILabel label;
 		public int pageNum;
-		public bool valid;
+		public int Len;
 	}
 
-
+	PageSorter sorter = new  PageSorter ();
 	public GameObject textItem;
 	public UIGrid uiGrid;
 
@@ -38,7 +38,61 @@ public class ReadingUI : UIWindow {
 
 	void OnCenterFinished(Transform trans)
 	{
-		
+		int i = 0;
+		for (; i < 3; ++i)
+		{
+			if (trans == pages[i].label.transform.parent)
+			{
+				book.bookmark = pages [i].pageNum;				
+				break;
+			}
+		}
+
+		if (i == 0) {			
+			int nLen = book.FillUILabelWithEnd (pages [2].label, pages [0].pageNum - 1, nLabelHeight);
+			pages [2].pageNum = pages [0].pageNum - nLen;
+			pages [2].Len = nLen;
+		} else if (i == 1) {
+			if (pages [0].Len == 0) {
+				int nLen = book.FillUILabelWithEnd (pages [0].label, pages [1].pageNum - 1, nLabelHeight);
+				pages [0].pageNum = pages [1].pageNum - nLen;
+				pages [0].Len = nLen;
+			}
+
+			if (pages [2].Len == 0) {
+				int nLen = book.FillUILabelWithStart (pages [2].label, pages [1].pageNum + pages [1].Len, nLabelHeight);
+				pages [2].pageNum = pages [1].pageNum + pages [1].Len;
+				pages [2].Len = nLen;
+			}
+		}
+		else
+		{
+			int nLen = book.FillUILabelWithStart (pages [0].label, pages [2].pageNum + pages [2].Len, nLabelHeight);
+			pages [0].pageNum = pages [2].pageNum + pages [2].Len;
+			pages [0].Len = nLen;
+		}
+
+		pages.Sort (sorter);
+		for ( i = 0; i < 3; ++i)
+		{
+			pages [i].label.transform.parent.SetSiblingIndex (i);
+		}
+		uiGrid.ResetPosition ();
+
+		UIScrollView sview = scrollView.GetComponent<UIScrollView> ();
+		if (pages [0].pageNum == 0)
+		{
+			// First move the position back to where it would be if the scroll bars got reset to zero
+			sview.SetDragAmount(0, 0, false);
+
+			// Next move the clipping area back and update the scroll bars
+			sview.SetDragAmount(0, 0, true);
+		}
+		else
+		{
+			sview.SetDragAmount(0.5f, 0, false);
+			sview.SetDragAmount(0.5f, 0, true);
+		}
 	}
 
 
@@ -52,9 +106,9 @@ public class ReadingUI : UIWindow {
 	{  
 		public int Compare(PageStruct x, PageStruct y)
 		{
-			if (!x.valid) {
+			if (x.Len <= 0) {
 				return 1;
-			} else if (!y.valid) {
+			} else if (x.Len <= 0) {
 				return -1;
 			} 
 
@@ -91,34 +145,24 @@ public class ReadingUI : UIWindow {
 
 		pages.Add (page1);
 		int nLen = book.FillUILabelWithStart (page1.label, page1.pageNum, nLabelHeight);
-		if (nLen > 0)
-		{
-			page1.valid = true;
-		}
+		page1.Len = nLen;
 
 		PageStruct page2 = new PageStruct ();
 		page2.label = label2;
 		page2.pageNum = page1.pageNum + nLen;
 
 		pages.Add (page2);
-		nLen = book.FillUILabelWithStart (page2.label, page2.pageNum, nLabelHeight);
-		if (nLen > 0)
-		{
-			page2.valid = true;
-		}
-
+		page2.Len = book.FillUILabelWithStart (page2.label, page2.pageNum, nLabelHeight);
+	
 		PageStruct page3 = new PageStruct ();
 		page3.label = label3;
 
 		pages.Add (page3);
 		nLen = book.FillUILabelWithEnd (page3.label, page1.pageNum - 1, nLabelHeight);
 		page3.pageNum = page1.pageNum - nLen;
-		if (nLen > 0)
-		{
-			page3.valid = true;
-		}
+		page3.Len = nLen;
 
-		pages.Sort (new PageSorter ());
+		pages.Sort (sorter);
 		for (int i = 0; i < 3; ++i)
 		{
 			pages [i].label.transform.parent.SetSiblingIndex (i);
