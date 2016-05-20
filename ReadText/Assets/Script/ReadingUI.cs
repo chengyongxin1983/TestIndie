@@ -28,7 +28,6 @@ public class ReadingUI : UIWindow {
 
 	List<PageStruct> pages = new List<PageStruct> ();
 
-	UILabel[]  labels= new UILabel[3];
 	int[] pageIdx = new int[3];
 
 	void OnCrossBound(Transform trans)
@@ -36,8 +35,18 @@ public class ReadingUI : UIWindow {
 		//OnCenterFinished(trans);
 	}
 
+
+	float lastTimeOnCenter;
 	void OnCenterFinished(Transform trans)
 	{
+		/*
+		if (Time.time - lastTimeOnCenter < 0.2f)
+		{
+			return;
+		}*/
+
+		lastTimeOnCenter = Time.time;
+		
 		int i = 0;
 		for (; i < 3; ++i)
 		{
@@ -48,6 +57,7 @@ public class ReadingUI : UIWindow {
 			}
 		}
 
+		Debug.Log("OnCenterFinished" + book.bookmark.ToString());
 		if (i == 0) {			
 			int nLen = book.FillUILabelWithEnd (pages [2].label, pages [0].pageNum - 1, nLabelHeight);
 			pages [2].pageNum = pages [0].pageNum - nLen;
@@ -72,15 +82,27 @@ public class ReadingUI : UIWindow {
 			pages [0].Len = nLen;
 		}
 
+		ResetPagePosition();
+	}
+
+	void ResetPagePosition()
+	{
+
 		pages.Sort (sorter);
-		for ( i = 0; i < 3; ++i)
+
+		int nCurrentPage = 1;
+		for (int i = 0; i < 3; ++i)
 		{
 			pages [i].label.transform.parent.SetSiblingIndex (i);
+			if (pages[i].pageNum == book.bookmark && pages[i].Len > 0)
+			{
+				nCurrentPage = i;
+			}
 		}
 		uiGrid.ResetPosition ();
 
 		UIScrollView sview = scrollView.GetComponent<UIScrollView> ();
-		if (pages [0].pageNum == 0)
+		if (nCurrentPage == 0)
 		{
 			// First move the position back to where it would be if the scroll bars got reset to zero
 			sview.SetDragAmount(0, 0, false);
@@ -88,10 +110,15 @@ public class ReadingUI : UIWindow {
 			// Next move the clipping area back and update the scroll bars
 			sview.SetDragAmount(0, 0, true);
 		}
-		else
+		else if (nCurrentPage == 1)
 		{
 			sview.SetDragAmount(0.5f, 0, false);
 			sview.SetDragAmount(0.5f, 0, true);
+		}
+		else
+		{
+			sview.SetDragAmount(1.0f, 0, false);
+			sview.SetDragAmount(1.0f, 0, true);
 		}
 	}
 
@@ -108,11 +135,24 @@ public class ReadingUI : UIWindow {
 		{
 			if (x.Len <= 0) {
 				return 1;
-			} else if (x.Len <= 0) {
-				return -1;
 			} 
 
-			return x.pageNum - y.pageNum;
+			if (y.Len <= 0)
+			{
+				return -1;
+			}
+
+			int delta = x.pageNum - y.pageNum;
+			if (delta > 0)
+			{
+				return 1;
+			}
+			else if (delta < 0)
+			{
+				return -1;
+			}
+
+			return 0;
 		}
 	}
 
@@ -128,39 +168,60 @@ public class ReadingUI : UIWindow {
 		GridlocalPosition.y += scrollView.baseClipRegion.y / 2.0f;
 		uiGrid.transform.localPosition = GridlocalPosition;
 		GameObject obj1 = NGUITools.AddChild (uiGrid.gameObject, textItem);
-		UILabel label = obj1.GetComponentInChildren<UILabel>();
+
+
+		UILabel[] labels = new UILabel[3];
+		labels[0] = obj1.GetComponentInChildren<UILabel>();
 
 		nLabelHeight = (int)scrollView.height;
 		ResetPageLabel (obj1);
-		book.Init(strBookName, label, nLabelHeight );
+		book.Init(strBookName, labels[0], nLabelHeight );
 
 		GameObject obj2 = NGUITools.AddChild (uiGrid.gameObject, textItem);
-		UILabel label2= ResetPageLabel (obj2);
+		labels[1] = ResetPageLabel (obj2);
 		GameObject obj3 = NGUITools.AddChild (uiGrid.gameObject, textItem);
-		UILabel label3= ResetPageLabel (obj3);
-	
-		PageStruct page1 = new PageStruct ();
-		page1.label = label;
-		page1.pageNum = book.bookmark;
+		labels[2] = ResetPageLabel (obj3);
 
-		pages.Add (page1);
-		int nLen = book.FillUILabelWithStart (page1.label, page1.pageNum, nLabelHeight);
-		page1.Len = nLen;
+		if (book.bookmark == 0)
+		{
+			int pageNum = book.bookmark;
+			for (int i = 0; i < 3; ++i)
+			{
+				PageStruct page = new PageStruct ();
+				page.label = labels[i];
+				page.pageNum = pageNum;
+				page.Len = book.FillUILabelWithStart (page.label, page.pageNum, nLabelHeight);
+				pageNum += page.Len;
+				pages.Add(page);
+			}
+		}
+		else 
+		{
+			int pageNum = book.bookmark;
+			for (int i = 0; i < 2; ++i)
+			{
+				PageStruct page = new PageStruct ();
+				page.label = labels[i];
+				page.pageNum = pageNum;
+				page.Len = book.FillUILabelWithStart (page.label, page.pageNum, nLabelHeight);
+				pageNum += page.Len;
+				pages.Add(page);
+			}
 
-		PageStruct page2 = new PageStruct ();
-		page2.label = label2;
-		page2.pageNum = page1.pageNum + nLen;
+			PageStruct page3 = new PageStruct ();
+			page3.label = labels[2];
+			page3.Len = book.FillUILabelWithEnd (page3.label, pages[0].pageNum - 1, nLabelHeight);
+			page3.pageNum =  pages[0].pageNum - page3.Len;
+			pages.Add(page3);
+			if ( pages[2].Len == 0)
+			{
+				pages[2].Len = book.FillUILabelWithEnd (pages[2].label, page3.pageNum - 1, nLabelHeight);
+				pages[2].pageNum =  page3.pageNum - pages[2].Len;
+			}
 
-		pages.Add (page2);
-		page2.Len = book.FillUILabelWithStart (page2.label, page2.pageNum, nLabelHeight);
-	
-		PageStruct page3 = new PageStruct ();
-		page3.label = label3;
+		}
+			
 
-		pages.Add (page3);
-		nLen = book.FillUILabelWithEnd (page3.label, page1.pageNum - 1, nLabelHeight);
-		page3.pageNum = page1.pageNum - nLen;
-		page3.Len = nLen;
 
 		pages.Sort (sorter);
 		for (int i = 0; i < 3; ++i)
@@ -210,11 +271,50 @@ public class ReadingUI : UIWindow {
 
 	void Update()
 	{
-
+		/*
+		if (scrollView.transform.localPosition.x > 10)
+		{
+			OnCenterFinished(pages[0].label.transform);
+		}
+		else if (scrollView.transform.localPosition.x < -scrollView.baseClipRegion.z- 10)			
+		{
+			OnCenterFinished(pages[2].label.transform);
+		}*/
 	}
 
 	public override void OnDestroy()
 	{
 		base.OnDestroy ();
+	}
+
+	void onPrePage()
+	{
+		int nLen = book.FillUILabelWithEnd (pages [2].label, pages [0].pageNum - 1, nLabelHeight);
+		pages [2].pageNum = pages [0].pageNum - nLen;
+		pages [2].Len = nLen;
+
+
+		book.bookmark = pages[0].pageNum;
+
+
+		Debug.Log("bookmark" + book.bookmark.ToString());
+		ResetPagePosition();
+		lastTimeOnCenter = Time.time;
+	}
+
+	void onPostPage()
+	{
+		int nLen = book.FillUILabelWithStart (pages [0].label, pages [2].pageNum + pages [2].Len, nLabelHeight);
+		pages [0].pageNum = pages [2].pageNum + pages [2].Len;
+		pages [0].Len = nLen;
+
+		book.bookmark = pages[2].pageNum;
+		ResetPagePosition();
+		lastTimeOnCenter = Time.time;
+	}
+
+	void onMenu()
+	{
+		
 	}
 }

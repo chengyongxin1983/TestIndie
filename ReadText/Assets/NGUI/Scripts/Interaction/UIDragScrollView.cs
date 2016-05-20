@@ -83,6 +83,32 @@ public class UIDragScrollView : MonoBehaviour
 
 	void OnPress (bool pressed)
 	{
+		bool bPrePostPage = false;
+		if (!pressed && lastDragFrame != Time.frameCount)
+		{
+			Vector2 i = UICamera.currentTouch.pos;
+
+			int w = Screen.width;
+
+			int pre = w/3;
+			int post = pre + pre;
+			if (i.x < pre)
+			{
+				bPrePostPage = true;
+				transform.parent.parent.parent.SendMessage("onPrePage");
+			}
+			else if (i.x > post)
+			{
+
+				bPrePostPage = true;
+				transform.parent.parent.parent.SendMessage("onPostPage");
+			}
+			else
+			{
+
+				transform.parent.parent.parent.SendMessage("onMenu");
+			}
+		}
 		// If the scroll view has been set manually, don't try to find it again
 		if (mAutoFind && mScroll != scrollView)
 		{
@@ -112,6 +138,16 @@ public class UIDragScrollView : MonoBehaviour
 			scrollView.Drag();
 	}
 
+	int lastDragFrame;
+	void OnDragStart()
+	{
+		Debug.Log("OnDragStart");
+	}
+
+	void OnDragEnd()
+	{
+		lastDragFrame = Time.frameCount;
+	}
 	/// <summary>
 	/// If the object should support the scroll wheel, do it.
 	/// </summary>

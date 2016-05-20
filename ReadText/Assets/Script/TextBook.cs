@@ -345,6 +345,12 @@ public class TextBook
 				while(vSize.y < nLabelHeight);
 
 				int i = nEstimateStartPage + calcLineCount;
+				if (i >= nEnd)
+				{
+					i = nEnd;
+				}
+
+
 				for (; i >= nEstimateStartPage ; --i)
 				{
 					calcPageText = text.Substring(i, nEnd - i + 1);
